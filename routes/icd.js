@@ -1,11 +1,14 @@
-var express = require('express');
-var multer = require('multer');
+const express = require('express');
+const multer = require('multer');
 //var upload = require('./multer')
-var router = express.Router();
-var fs = require('fs')
+const router = express.Router();
+const fs = require('fs')
 
-var icd = require('../models/icd');
-var maintable = require('../models/maintable');
+const icd = require('../models/icd');
+const maintable = require('../models/maintable');
+const dataProcessFunc = require('../models/dataprocess');
+const dataProcess = dataProcessFunc.dataProcess
+const dataBuffer = dataProcessFunc.dataBuffer
 
 var createFolder = function(folder){ 
     try{ 
@@ -49,6 +52,9 @@ router.post('/changeavatar', upload.single(), function(req, res){
     avatar.mv('./upload/'+ avatar.name, function(err){
         if(err)
             return res.status(500).send(err);
+        filename = avatar.name.split('.')[0];
+        datatype = avatar.name.split('.')[1];
+        dataProcess.storeData(filename, datatype)
         res.send('File uploaded!')
     });
 })
