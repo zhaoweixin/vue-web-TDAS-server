@@ -23,6 +23,7 @@ router.post('/changeavatar', upload.single(), function(req, res){
 })
     //获取已上传数据列表
 router.post('/getDatalist', function(req, res, next){
+    res.setHeader('Content-Type', 'application/json');
     res.json(dataBuffer.getDataKeysList())
     //
 })
@@ -39,7 +40,8 @@ router.post('/getInitData' ,function(req, res, next){
     let dataNameList = dataBuffer.getDataNameList()
     let randomKey = Math.floor(Math.random() * dataNameList.length)
     let dataName = dataNameList[randomKey]
-    console.log(dataNameList, randomKey)
+
+    console.log(randomKey, dataName)
 
     resData = {
         "dimensions": dataBuffer.getDataDimensions(dataName),
@@ -49,6 +51,7 @@ router.post('/getInitData' ,function(req, res, next){
         }
     }
     
+    res.setHeader('Content-Type', 'application/json');
     res.json(resData)
 })
 

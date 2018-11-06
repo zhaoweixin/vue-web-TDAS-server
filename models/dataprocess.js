@@ -142,6 +142,14 @@ const dataBuffer = {
         }
         return l;
     },
+    getDataNameList: function(){
+        let l = []
+        for(var key in this.data){
+            //
+            l.push(key)
+        }
+        return l;
+    },
     getDataDimensions: function(dataName){
         if(this.dimensions.hasOwnProperty(dataName)) return this.dimensions[dataName]
     },
