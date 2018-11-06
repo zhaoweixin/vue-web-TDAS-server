@@ -51,7 +51,7 @@ dataProcess = {
             //rawdata.data = json
             //把读入的数据存入dataBuffer
             if(!dataBuffer.data.hasOwnProperty(dataname)){
-                dataBuffer.data[dataname] = json
+                dataBuffer.data[dataname] = json;
             }
         }
 
@@ -99,6 +99,7 @@ dataProcess = {
                 }
                 
                 let json = JSON.parse(data);
+
                 json = jsonAddId(json);
                 addRawDataToBuffer(json);
                 createIndex(json, dataname);
@@ -114,6 +115,7 @@ dataProcess = {
         index = dataBuffer.index[dataName][StoreId]
         //isDelete = true 表示已经删除
         dataBuffer.data[dataName][index].isDelete = true
+        
     },
     sortData: function(filename){
         dataName = filename.split('.')[0]

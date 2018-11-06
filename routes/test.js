@@ -4,7 +4,7 @@ const multer = require('multer');
 const router = express.Router();
 const fs = require('fs')
 
-const icd = require('../models/icd');
+const test = require('../models/test');
 const maintable = require('../models/maintable');
 const dataProcessFunc = require('../models/dataprocess');
 const dataProcess = dataProcessFunc.dataProcess
