@@ -3,7 +3,8 @@ const staticBasePath = "../upload/"
 const path = require('path');
 const d3 = require('d3')
 const csvToJson = require('convert-csv-to-json');
-const flatten = require('flat')
+const flatten = require('flat');
+const keys = require('all-object-keys');
 
 //命名空间 首先检查dataprocess是否已经被定义 
 //如果是的话，那么使用现有的dataprocess全局对象
@@ -115,7 +116,12 @@ dataProcess = {
         index = dataBuffer.index[dataName][StoreId]
         //isDelete = true 表示已经删除
         dataBuffer.data[dataName][index].isDelete = true
-        
+    },
+    unDeleteData: function(StoreId, filename){
+        dataName = filename.split('.')[0]
+        index = dataBuffer.index[dataName][StoreId]
+        //isDelete = false 表示未删除
+        dataBuffer.data[dataName][index].isDelete = false
     },
     sortData: function(filename){
         dataName = filename.split('.')[0]
@@ -126,10 +132,13 @@ const dataBuffer = {
     data: {},
     index: {},
     dimensions: {},
-    getDataNameList: function(){
-        let l = []
-        for(var i in this.data){
-            l.push(i);
+    getDataKeysList: function(){
+        let l = {}
+        for(var key in this.data){
+            if(!l.hasOwnProperty(key)){
+                l[key] = []
+                l[key] = keys(this.data[key][0])
+            }
         }
         return l;
     },

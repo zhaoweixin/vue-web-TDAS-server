@@ -1,8 +1,8 @@
-const mongoose = require('../common/db');
 const express = require('express');
 const upload = require('./multer')
 const router = express.Router();
 const fs = require('fs')
+
 
 const dataProcessFunc = require('../models/dataprocess');
 const dataProcess = dataProcessFunc.dataProcess
@@ -23,7 +23,8 @@ router.post('/changeavatar', upload.single(), function(req, res){
 })
     //获取已上传数据列表
 router.post('/getDatalist', function(req, res, next){
-    res.json(dataBuffer.getDataNameList())
+    res.json(dataBuffer.getDataKeysList())
+    //
 })
 
 router.post('/getInitData' ,function(req, res, next){
