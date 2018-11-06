@@ -10,19 +10,19 @@ const dataProcessFunc = require('../models/dataprocess');
 const dataProcess = dataProcessFunc.dataProcess
 const dataBuffer = dataProcessFunc.dataBuffer
 
-var createFolder = function(folder){ 
+var createFolder = function(folder){
     try{ 
         fs.accessSync(folder);  
     }catch(e){ 
         fs.mkdirSync(folder); 
     }   
-}; 
+};
 
 var uploadFolder = './upload/'; 
  
 createFolder(uploadFolder);
 
-// 通过 filename 属性定制 
+// 通过 filename 属性定制
 var storage = multer.diskStorage({ 
     destination: function (req, file, cb) {
         cb(null, uploadFolder);    // 保存的路径，备注：需要自己创建 
@@ -52,11 +52,14 @@ router.post('/changeavatar', upload.single(), function(req, res){
     avatar.mv('./upload/'+ avatar.name, function(err){
         if(err)
             return res.status(500).send(err);
-        filename = avatar.name.split('.')[0];
+        dataname = avatar.name.split('.')[0];
         datatype = avatar.name.split('.')[1];
-        dataProcess.storeData(filename, datatype)
+        dataProcess.storeData(dataname, datatype)
         res.send('File uploaded!')
     });
 })
 
-module.exports =     router;
+router.post('/getDatalist', function(req, res, next){
+    res.json(dataBuffer.getDataNameList())
+})
+module.exports = router;

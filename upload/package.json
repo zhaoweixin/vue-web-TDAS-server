@@ -1,4 +1,4 @@
-﻿{
+﻿[{
   "_from": "fs.realpath@^1.0.0",
   "_id": "fs.realpath@1.0.0",
   "_inBundle": false,
@@ -56,4 +56,4 @@
     "test": "tap test/*.js --cov"
   },
   "version": "1.0.0"
-}
+}]
