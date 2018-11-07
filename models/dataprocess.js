@@ -92,13 +92,13 @@ dataProcess = {
 
                 for(let i=0; i<length; i++){
                     let str = dataList[i][key];
-                    let test = Number(str)
+                    //let test = Number(str)
 
-                    if(Date.parse(str) != 'NaN'){
+                    if(isNaN(str) && ('' + (Date.parse(str)) != 'NaN')){
                         //是否为时间型 -> example: YYYY-MM-DD
                         dict.temporal++
                         continue;
-                    } else if(!isNaN(test)){
+                    } else if(!isNaN(str)){
                         //是否为数字 quantitative
                         dict.quantitative++
                         continue;
@@ -107,6 +107,8 @@ dataProcess = {
                         dict.ordinal++
                     }
                 }
+
+                console.log(dict)
 
                 let type = 'ordinal'
                 let maxTemp = 0

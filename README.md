@@ -1,9 +1,9 @@
-How to start?
+#How to start?
     npm install
     npm start
-    
-How to use?
-    post url: 'http://localhost:3000/api/getData'
+
+#How to use?
+    post url: '.../api/getData'
         need data: none
         return data: 
             {
@@ -25,7 +25,7 @@ How to use?
                 }
             }
         
-    post url: 'http://localhost:3000/api/getDatalist'
+    post url: '.../api/getDatalist'
         need data: none
         return data:
             [
