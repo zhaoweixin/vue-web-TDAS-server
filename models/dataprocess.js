@@ -5,6 +5,7 @@ const d3 = require('d3')
 const csvToJson = require('convert-csv-to-json');
 const flatten = require('flat');
 const keys = require('all-object-keys');
+const dsv = d3.dsvFormat(",")
 
 //命名空间 首先检查dataprocess是否已经被定义 
 //如果是的话，那么使用现有的dataprocess全局对象
@@ -12,7 +13,7 @@ const keys = require('all-object-keys');
 var dataProcess = dataProcess || {};
 
 dataProcess = {
-    storeData: function(dataname, datatype){
+    storeData: function(dataName, dataType){
         /*-----------------------------------------------------------------------------------------*/
         const jsonAddId = function(obj){
             //递归遍历确保所有变量加上id
@@ -35,8 +36,10 @@ dataProcess = {
                 for(let i=0; i<obj.length;i++){
                     obj[i]['StoreId'] = createRandomId()
                     obj[i]['isDelete'] = false
+                    /*
                     let temp = obj[i]
                     obj[i] = flatten(temp)
+                    */
                 }
             } else {
                 recursion(obj)
@@ -48,49 +51,71 @@ dataProcess = {
             return (Math.random()*10000000).toString(16).substr(0,4)+'-'+(new Date()).getTime()+'-'+Math.random().toString().substr(2,5);
         }
 
-        const addRawDataToBuffer = function (json) {
+        const addRawDataToBuffer = function (json, dataName) {
             //rawdata.data = json
             //把读入的数据存入dataBuffer
-            if(!dataBuffer.data.hasOwnProperty(dataname)){
-                dataBuffer.data[dataname] = json;
+            if(!dataBuffer.data.hasOwnProperty(dataName)){
+                dataBuffer.data[dataName] = json;
             }
         }
 
-        const createIndex = function (json, dataname){
-            if(!dataBuffer.index.hasOwnProperty(dataname)){
-                dataBuffer.index[dataname] = {}
+        const createIndex = function (json, dataName){
+            if(!dataBuffer.index.hasOwnProperty(dataName)){
+                dataBuffer.index[dataName] = {}
+
                 for(let i=0; i<json.length; i++){
                     let key = json[i]['StoreId'];
                     let value = i;
-                    if(!dataBuffer.index[dataname].hasOwnProperty(key)){
-                        dataBuffer.index[dataname][key] = value
-                    }
-                        
+                    if(!dataBuffer.index[dataName].hasOwnProperty(key)){
+                        dataBuffer.index[dataName][key] = value
+                    }     
                 }
             }
         }
 
-        const generateDimensions = function (json, dataname) {
-            if(!dataBuffer.dimensions.hasOwnProperty(dataname)){
-                dataBuffer.dimensions[dataname] = []
-                //console.log(typeof dataBuffer.data[filename][0], dataBuffer.data[filename][0])
-                
-                dataBuffer.dimensions[dataname] = Object.keys(dataBuffer.data[dataname][0])
+        const generateDimensions = function (columns, dataName) {
+            let obj = {
+                'name': dataName,
+                'dimensions': []
             }
-            //need to improve
+            columns.forEach(function(d,i){
+                obj.dimensions.push({
+                    'name': d,
+                    'type': 'Ordinal'
+                })
+            })
+            dataBuffer.dimensions.push(obj)
+            //To do judge type
         }
         /*-----------------------------------------------------------------------------------------*/
-        if(datatype == 'csv'){
+        if(dataType == 'csv'){
             //使用插件convert-csv-to-json读入csv并转成json赋id
-            let json = csvToJson.getJsonFromCsv(path.join(__dirname, staticBasePath + dataname + '.' + datatype));
-            json = jsonAddId(json);
-            addRawDataToBuffer(json);
-            createIndex(json, dataname);
-            generateDimensions(json, dataname);
-            console.log(dataname + "." + datatype + " successful loading~")
-        } else if(datatype == 'json'){
+            fs.readFile(path.join(__dirname, staticBasePath + dataName + '.' + dataType), 'utf-8', function(err, data){
+                if (err) throw err;
+                //处理字符串首字符问题
+                let firstCode = data.charCodeAt(0)
+                if (firstCode < 0x20 || firstCode > 0x7f){
+                    data = data.substring(1)
+                }
+                let json = dsv.parse(data)
+                let rawdata = []
+                let columns = json.columns
+
+                json.forEach(function(d,i){
+                    rawdata.push(d)
+                })
+                addRawDataToBuffer(rawdata, dataName);
+                generateDimensions(columns, dataName);
+                jsonAddId(rawdata);
+                createIndex(rawdata, dataName);
+                if(dataName == "package"){
+                    console.log()
+                }
+                console.log(dataName + "." + dataType + " successful loading~")
+            })
+        } else if(dataType == 'json'){
             //使用fs读入json
-            fs.readFile(path.join(__dirname, staticBasePath + dataname + '.' + datatype), 'utf-8', function(err, data) {
+            fs.readFile(path.join(__dirname, staticBasePath + dataName + '.' + dataType), 'utf-8', function(err, data) {
                 if (err) throw err;
 
                 //处理字符串首字符问题
@@ -99,13 +124,14 @@ dataProcess = {
                     data = data.substring(1)
                 }
                 
-                let json = JSON.parse(data);
+                let rawdata = JSON.parse(data);
+                let columns = Object.keys(flatten(rawdata[0]))
 
-                json = jsonAddId(json);
-                addRawDataToBuffer(json);
-                createIndex(json, dataname);
-                generateDimensions(json, dataname);
-                console.log(dataname + "." + datatype + " successful loading~")
+                addRawDataToBuffer(rawdata, dataName);
+                generateDimensions(columns, dataName);
+                jsonAddId(rawdata);
+                createIndex(rawdata, dataName);
+                console.log(dataName + "." + dataType + " successful loading~")
             })
         }
     },
@@ -131,16 +157,9 @@ dataProcess = {
 const dataBuffer = {
     data: {},
     index: {},
-    dimensions: {},
+    dimensions: [],
     getDataKeysList: function(){
-        let l = {}
-        for(var key in this.data){
-            if(!l.hasOwnProperty(key)){
-                l[key] = []
-                l[key] = keys(this.data[key][0])
-            }
-        }
-        return l;
+        return this.dimensions;
     },
     getDataNameList: function(){
         let l = []
@@ -151,7 +170,10 @@ const dataBuffer = {
         return l;
     },
     getDataDimensions: function(dataName){
-        if(this.dimensions.hasOwnProperty(dataName)) return this.dimensions[dataName]
+        for(let i in this.dimensions){
+            if(this.dimensions[i]['name'] == dataName)
+                return this.dimensions[i]['dimensions']
+        }
     },
     getData: function(dataName){
         if(this.data.hasOwnProperty(dataName)) return this.data[dataName]

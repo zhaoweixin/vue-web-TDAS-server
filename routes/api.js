@@ -10,7 +10,7 @@ const dataBuffer = dataProcessFunc.dataBuffer
 
 //api
     //上传并保存数据
-router.post('/changeavatar', upload.single(), function(req, res){
+router.post('/changeAvatar', upload.single(), function(req, res){
     const avatar = req.files.null;
     avatar.mv('./upload/'+ avatar.name, function(err){
         if(err)
@@ -28,13 +28,7 @@ router.post('/getDatalist', function(req, res, next){
     //
 })
 
-router.post('/getInitData' ,function(req, res, next){
-    /*
-        请求数据格式
-        {
-            dataName: value
-        }
-    */
+router.post('/getData' ,function(req, res, next){
     
     //随机表
     let dataNameList = dataBuffer.getDataNameList()
@@ -42,7 +36,7 @@ router.post('/getInitData' ,function(req, res, next){
     let dataName = dataNameList[randomKey]
 
     console.log(randomKey, dataName)
-
+    
     resData = {
         "dimensions": dataBuffer.getDataDimensions(dataName),
         "description": "",
@@ -57,14 +51,17 @@ router.post('/getInitData' ,function(req, res, next){
 
     //暂时使用默认存入数据功能
 const storeDefaultData = function(){
-    let dataInfo = {
-        "teachingdata": "json",
-        "package": "json",
-        "2013-2014NBAPlayerStats": "csv"
-    }
-    for(var key in dataInfo){
-        dataProcess.storeData(key, dataInfo[key])
-    }
+    fs.readdir(process.cwd() + "/upload", function(err, files){
+        //file -> list
+        if (err) {
+            console.log(err);
+        }
+        files.forEach(function(d,i){
+            let dataName = d.split('.')[0]
+            let dataType = d.split('.')[1]
+            dataProcess.storeData(dataName, dataType)
+        })
+    })
 }
 storeDefaultData();
 
