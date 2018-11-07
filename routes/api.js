@@ -49,6 +49,11 @@ router.post('/getData' ,function(req, res, next){
     res.json(resData)
 })
 
+router.post('/test' ,function(req, res, next){
+    
+    res.setHeader('Content-Type', 'application/json');
+    res.json(dataBuffer)
+})
     //暂时使用默认存入数据功能
 const storeDefaultData = function(){
     fs.readdir(process.cwd() + "/upload", function(err, files){

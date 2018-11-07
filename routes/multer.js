@@ -7,11 +7,11 @@ const dataprocess = require('../models/dataprocess')
 //设置上传文件夹
 const uploadFolder = './upload/';
 const createFolder = function(folder){
-    try{ 
+    try{
         fs.accessSync(folder);  
     }catch(e){ 
         fs.mkdirSync(folder); 
-    }   
+    }
 };
 createFolder(uploadFolder);
 

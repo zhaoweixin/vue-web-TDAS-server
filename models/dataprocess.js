@@ -78,10 +78,48 @@ dataProcess = {
                 'name': dataName,
                 'dimensions': []
             }
+            
             columns.forEach(function(d,i){
+                //通过统计属性内数据类型出现次数决定类型
+                let key = d
+                let dataList = dataBuffer.getData(dataName)
+                let length = dataList.length < 100 ? dataList.length : 100
+                let dict = {
+                    'quantitative': 0,
+                    'temporal': 0,
+                    'ordinal': 0
+                }
+
+                for(let i=0; i<length; i++){
+                    let str = dataList[i][key];
+                    let test = Number(str)
+
+                    if(Date.parse(str) != 'NaN'){
+                        //是否为时间型 -> example: YYYY-MM-DD
+                        dict.temporal++
+                        continue;
+                    } else if(!isNaN(test)){
+                        //是否为数字 quantitative
+                        dict.quantitative++
+                        continue;
+                    } else {
+                        //是否为字符型
+                        dict.ordinal++
+                    }
+                }
+
+                let type = 'ordinal'
+                let maxTemp = 0
+                for(let key in dict){
+                    if(dict[key] > maxTemp){
+                        maxTemp = dict[key];
+                        type = key
+                    }
+                }
+
                 obj.dimensions.push({
                     'name': d,
-                    'type': 'Ordinal'
+                    'type': type
                 })
             })
             dataBuffer.dimensions.push(obj)
@@ -108,9 +146,6 @@ dataProcess = {
                 generateDimensions(columns, dataName);
                 jsonAddId(rawdata);
                 createIndex(rawdata, dataName);
-                if(dataName == "package"){
-                    console.log()
-                }
                 console.log(dataName + "." + dataType + " successful loading~")
             })
         } else if(dataType == 'json'){
