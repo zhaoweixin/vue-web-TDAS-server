@@ -1,8 +1,11 @@
-#How to start?
+## Build Setup
+``` bash
+# install dependencies
     npm install
     npm start
-
-#How to use?
+```
+## Route
+``` bash
     post url: '.../api/getData'
         need data: none
         return data: 
@@ -41,3 +44,6 @@
                 },{}
                 ...
             ]
+```
+#How to use?
+

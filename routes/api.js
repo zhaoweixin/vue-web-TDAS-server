@@ -33,10 +33,7 @@ router.post('/getData' ,function(req, res, next){
     //随机表
     let dataNameList = dataBuffer.getDataNameList()
     let randomKey = Math.floor(Math.random() * dataNameList.length)
-    let dataName = dataNameList[randomKey]
-
-    console.log(randomKey, dataName)
-    
+    let dataName = dataNameList[randomKey]    
     resData = {
         "dimensions": dataBuffer.getDataDimensions(dataName),
         "description": "",
