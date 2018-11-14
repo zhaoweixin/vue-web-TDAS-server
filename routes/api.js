@@ -3,7 +3,6 @@ const upload = require('./multer')
 const router = express.Router();
 const fs = require('fs')
 
-
 const dataProcessFunc = require('../models/dataprocess');
 const dataProcess = dataProcessFunc.dataProcess
 const dataBuffer = dataProcessFunc.dataBuffer
@@ -21,33 +20,59 @@ router.post('/changeAvatar', upload.single(), function(req, res){
         res.send('File uploaded!')
     });
 })
-    //获取已上传数据列表
-router.post('/getDatalist', function(req, res, next){
+
+//获取已上传数据列表
+router.post('/getDataInfo', function(req, res, next){
+    
+    let dataDimensions = dataBuffer.getAllDimensions()
+    let resdata = []
+    
+    for(let key in dataDimensions){
+        let dataCounts = dataBuffer.getDataLength(key)
+        let pagesCounts = dataBuffer.getDataPagesCount(key)
+        resdata.push({
+            'dimensions': dataDimensions[key],
+            'name': key,
+            'pages': pagesCounts,
+            'dataCounts': dataCounts
+        })
+    }
     res.setHeader('Content-Type', 'application/json');
-    res.json(dataBuffer.getDataKeysList())
-    //
+    res.json(resdata)
 })
 
-router.post('/getData' ,function(req, res, next){
-    
-    //随机表
-    let dataNameList = dataBuffer.getDataNameList()
-    let randomKey = Math.floor(Math.random() * dataNameList.length)
-    let dataName = dataNameList[randomKey]    
+//获取指定文件数据 
+router.post('/getSingleData' ,function(req, res, next){
+    // params :{dataName, preview, page }
+    let params = req.body,
+        dimensions = null,
+        description = null,
+        values = null
+
+    dimensions = dataBuffer.getSingleDimensions(params.dataName)
+    if(params.preview == 0){
+        //数据全部返回
+        values = dataBuffer.getSingleData(params.dataName)
+    } else {
+        //返回某一页面
+        values = dataBuffer.getPageData(params.dataName, params.page)
+    }
+
     resData = {
-        "dimensions": dataBuffer.getDataDimensions(dataName),
+        "dimensions": dimensions,
         "description": "",
         "data": {
-            "values": dataBuffer.getData(dataName)
+            "values": values
         }
     }
-    
     res.setHeader('Content-Type', 'application/json');
-    res.json(resData)
+    res.json(resData);
 })
 
+
+
+
 router.post('/test' ,function(req, res, next){
-    
     res.setHeader('Content-Type', 'application/json');
     res.json(dataBuffer)
 })

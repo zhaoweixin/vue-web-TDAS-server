@@ -74,15 +74,13 @@ dataProcess = {
         }
 
         const generateDimensions = function (columns, dataName) {
-            let obj = {
-                'name': dataName,
-                'dimensions': []
-            }
+            //重叠数据一律重置
+            dataBuffer.dimensions[dataName] = []
             
             columns.forEach(function(d,i){
                 //通过统计属性内数据类型出现次数决定类型
                 let key = d
-                let dataList = dataBuffer.getData(dataName)
+                let dataList = dataBuffer.getSingleData(dataName)
                 let length = dataList.length < 100 ? dataList.length : 100
                 let dict = {
                     'quantitative': 0,
@@ -108,8 +106,6 @@ dataProcess = {
                     }
                 }
 
-                console.log(dict)
-
                 let type = 'ordinal'
                 let maxTemp = 0
                 for(let key in dict){
@@ -118,13 +114,11 @@ dataProcess = {
                         type = key
                     }
                 }
-
-                obj.dimensions.push({
+                dataBuffer.dimensions[dataName].push({
                     'name': d,
                     'type': type
                 })
             })
-            dataBuffer.dimensions.push(obj)
             //To do judge type
         }
         /*-----------------------------------------------------------------------------------------*/
@@ -194,29 +188,45 @@ dataProcess = {
 const dataBuffer = {
     data: {},
     index: {},
-    dimensions: [],
-    getDataKeysList: function(){
+    dimensions: {},
+    getAllDimensions: function(){
         return this.dimensions;
     },
-    getDataNameList: function(){
-        let l = []
-        for(var key in this.data){
-            //
-            l.push(key)
-        }
-        return l;
-    },
-    getDataDimensions: function(dataName){
+    getSingleDimensions: function(dataName){
         for(let i in this.dimensions){
-            if(this.dimensions[i]['name'] == dataName)
-                return this.dimensions[i]['dimensions']
+            if(i == dataName){
+                return this.dimensions[i]
+            }
         }
     },
-    getData: function(dataName){
+    getDataPagesCount: function(dataName){
+        return Math.ceil(this.getDataLength(dataName) / 5)
+    },
+    getSingleData: function(dataName){
         if(this.data.hasOwnProperty(dataName)) return this.data[dataName]
+    },
+    getPageData: function(dataName, page){
+        if(!this.data.hasOwnProperty(dataName)) return false
+        let resdata = []
+        page = parseInt(page)
+        //判断页数是否在范围内
+        let pageCounts = this.getDataLength(dataName)
+        if(page < 1 || page > pageCounts) return false
+        
+        let start = 5 * page,
+            end = 5 * (page + 1)
+        console.log(start, end)
+        for(let i = start; i < end; i++){
+            resdata.push(this.data[dataName][i])
+        }
+        return resdata
+
     },
     getIndex: function(dataName){
         if(this.index.hasOwnProperty(dataName)) return this.index[dataName]
+    },
+    getDataLength: function(dataName){
+        if(this.data.hasOwnProperty(dataName)) return parseInt(this.data[dataName].length)
     }
 }
 
