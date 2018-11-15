@@ -69,12 +69,15 @@ router.post('/getSingleData' ,function(req, res, next){
     res.json(resData);
 })
 
-
-
-
 router.post('/test' ,function(req, res, next){
+    let params = req.body
+        dataName_1 = params.dataName_1,
+        dataName_2 = params.dataName_2,
+        column = params.column,
+        resData = []
+    resData = dataProcess.outerJoin()
     res.setHeader('Content-Type', 'application/json');
-    res.json(dataBuffer)
+    res.json(resData)
 })
     //暂时使用默认存入数据功能
 const storeDefaultData = function(){

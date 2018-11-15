@@ -166,8 +166,70 @@ dataProcess = {
             })
         }
     },
-    leftJoin: function(){},
-    rightJoin: function(){},
+    innerJoin: function(dataName_1, dataName_2, column){
+        //首先根据this.getSameColumns生成相同属性列
+        //根据相同属性this.constructToJoinData生成待处理数据格式(便于后续操作)
+        //两个数据表根据findSameKeyinTwoTable找到对应列相同值
+        //最后根据相同值生成合成数据
+        //重复值处理 n*n
+        
+        let sameColumns = this.getSameColumns(dataName_1, dataName_2),
+            redata_1 = this.constructToJoinData(dataName_1, column),
+            redata_2 = this.constructToJoinData(dataName_2, column),
+            sameKey = this.findSameKeyinTwoTable(dataName_1, dataName_2, column),
+            resList = []
+        
+        sameKey.forEach(function(d,i){
+            let key = d,
+                table_1 = redata_1[d],
+                table_2 = redata_2[d]
+            for(let i=0; i< table_1.length; i++){
+                let table_1_value = table_1[i],
+                    obj = null
+                for(let j=0; j < table_2.length; j++){
+                    let table_2_value = table_2[j]
+                    obj = Object.assign(table_1_value, table_2_value)
+                }
+                resList.push(obj)
+            }
+        })
+        
+        let resData = {
+            'sameColumns': sameColumns,
+            'redata_1': redata_1,
+            'redata_2': redata_2,
+            'sameKey': sameKey,
+            'assignData': resList
+        }
+        
+        return resData
+        //根据sameKey生成合成数据
+    },
+    outerJoin: function(){
+        
+        //let redata_1 = dataBuffer.getSingleData(dataName_1),
+        //   redata_2 = dataBuffer.getSingleData(dataName_2)
+        let a = [
+            {id: 4, name: 'Greg'},
+            {id: 1, name: 'David'},
+            {id: 2, name: 'John'},
+            {id: 3, name: 'Matt'},
+        ]
+        let b = [
+            {id: 5, name: 'Mathew', position: '1'},
+            {id: 6, name: 'Gracia', position: '2'},
+            {id: 2, name: 'John', position: '2'},
+            {id: 3, name: 'Matt', position: '2'},
+        ]
+
+        let r = a.filter(({ id: idv }) => b.every(({ id: idc }) => idv !== idc));
+        let newArr = b.concat(r).map((v) => v.position ? v : { ...v, position: null });
+        return newArr
+    },
+    leftJoin: function(dataName_1, dataName_2, column){
+
+    },
+    rightJoin: function(dataName_1, dataName_2, column){},
     deleteData: function(StoreId, filename){
         dataName = filename.split('.')[0]
         index = dataBuffer.index[dataName][StoreId]
@@ -182,6 +244,112 @@ dataProcess = {
     },
     sortData: function(filename){
         dataName = filename.split('.')[0]
+    },
+    findSameKeyinTwoTable: function(dataName_1, dataName_2, column){
+        let data_1 = dataBuffer.getSingleData(dataName_1),
+            data_2 = dataBuffer.getSingleData(dataName_2),
+            data_1_list = [],
+            data_2_list = [],
+            sameKey = []
+        //table A B C
+        //去重初始化 每次合并根据结果多次添加
+        data_1.forEach(function(d,i){
+            if(d.hasOwnProperty(column)){
+                if(data_1_list.indexOf(d) == -1){
+                    //去重添加
+                    data_1_list.push(d[column])
+                }
+            }
+        })
+
+        data_2.forEach(function(d,i){
+            if(d.hasOwnProperty(column)){
+                if(data_2_list.indexOf(d) == -1){
+                    //去重添加
+                    data_2_list.push(d[column])
+                }
+            }
+        })
+
+        //A -> C
+        data_1_list.forEach(function(d,i){
+            if(data_2_list.indexOf(d) != -1 && sameKey.indexOf(d) == -1){
+                //元素如果在表2存在并且未加入sameKey
+                sameKey.push(d)
+            }
+        })
+        //B -> C
+        data_2_list.forEach(function(d,i){
+            if(data_1_list.indexOf(d) != -1 && sameKey.indexOf(d) == -1){
+                //元素如果在表1存在并且没有加入到sameKey中
+                sameKey.push(d)
+            }
+        })
+        return sameKey
+    },
+    constructToJoinData: function(dataName, column){
+        //根据将要处理的列 改变数据到预处理格式 便于后续搜索操作
+        /*
+            {'key':{},'key':{}}
+        */
+        let data = dataBuffer.getSingleData(dataName),
+            redata = {},
+            tempdata = [],
+            col = dataName + '.' + column
+        //改变键值 'key' -> 'dataName.key'
+        data.forEach(function(d,i){
+            let objectKeys = Object.keys(d),
+                obj = {}
+            for(let j=0; j<objectKeys.length; j++){
+                let key = objectKeys[j],
+                    addKey = dataName + '.' + objectKeys[j]
+                if(!obj.hasOwnProperty(addKey) && key != 'StoreId' && key != 'isDelete'){
+                    obj[addKey] = d[key]
+                }
+            }
+            tempdata.push(obj)
+        })
+        
+        tempdata.forEach(function(d,i){
+            let key = d[col]
+            if(redata.hasOwnProperty(key)){
+                //如果已有该key 则追加数据
+                redata[key].push(d)
+            } else {
+                //如果没有该key 则新建
+                redata[key] = []
+                redata[key].push(d)
+            }
+        })
+        return redata
+    },
+    getSameColumns: function(dataName_1, dataName_2){
+        let data_1_dimensions = dataBuffer.getSingleDimensions(dataName_1),
+            data_2_dimensions = dataBuffer.getSingleDimensions(dataName_2),
+            data_1_list = [],
+            data_2_list = [],                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
+            redata = []
+        
+        //处理数据格式
+        data_1_dimensions.forEach(function(d){
+            if(redata.indexOf(d.name) == -1){
+                data_1_list.push(d.name)
+            }
+        })
+
+        data_2_dimensions.forEach(function(d){
+            if(redata.indexOf(d.name) == -1){
+                data_2_list.push(d.name)
+            }
+        })
+        
+        //查找相同列
+        data_1_list.forEach(function(d){
+            if(data_2_list.indexOf(d) != -1)
+                redata.push(d)
+        })
+
+        return redata
     }
 }
 
@@ -198,6 +366,7 @@ const dataBuffer = {
                 return this.dimensions[i]
             }
         }
+        return null
     },
     getDataPagesCount: function(dataName){
         return Math.ceil(this.getDataLength(dataName) / 5)
