@@ -167,18 +167,117 @@ dataProcess = {
         }
     },
     innerJoin: function(dataName_1, dataName_2, column){
+        return fakeDataBaseProcess._inner(dataName_1, dataName_2, column)
+    },
+    outerJoin: function(dataName_1, dataName_2, column){
+        let innerData = fakeDataBaseProcess._inner(dataName_1, dataName_2, column),
+            leftData = fakeDataBaseProcess._part(dataName_1, dataName_2, column),
+            rightData = fakeDataBaseProcess._part(dataName_2, dataName_1, column)
+        return innerData.concat(leftData.concat(rightData))
+    },
+    leftJoin: function(dataName_1, dataName_2, column){
+        let innerData = fakeDataBaseProcess._inner(dataName_1, dataName_2, column),
+            leftData = fakeDataBaseProcess._part(dataName_1, dataName_2, column)
+        return innerData.concat(leftData)
+    },
+    rightJoin: function(dataName_1, dataName_2, column){
+        let innerData = fakeDataBaseProcess._inner(dataName_1, dataName_2, column),
+            rightData = fakeDataBaseProcess._part(dataName_2, dataName_1, column)
+        return innerData.concat(rightData)
+    },
+    deleteData: function(StoreId, filename){
+        dataName = filename.split('.')[0]
+        index = dataBuffer.index[dataName][StoreId]
+        //isDelete = true 表示已经删除
+        dataBuffer.data[dataName][index].isDelete = true
+    },
+    unDeleteData: function(StoreId, filename){
+        dataName = filename.split('.')[0]
+        index = dataBuffer.index[dataName][StoreId]
+        //isDelete = false 表示未删除
+        dataBuffer.data[dataName][index].isDelete = false
+    },
+    sortData: function(filename){
+        dataName = filename.split('.')[0]
+    }
+}
+
+const dataBuffer = {
+    data: {},
+    index: {},
+    dimensions: {},
+    getAllDimensions: function(){
+        return this.dimensions;
+    },
+    getSingleDimensions: function(dataName){
+        for(let i in this.dimensions){
+            if(i == dataName){
+                return this.dimensions[i]
+            }
+        }
+        return null
+    },
+    getColoumnsList: function(dataName){
+        let data = this.getSingleDimensions(dataName)
+        let datalist = []
+        data.forEach(function(d){
+            if(datalist.indexOf(d.name) == -1){
+                datalist.push(d.name)
+            }
+        })
+        return datalist
+    },
+    getDataPagesCount: function(dataName){
+        return Math.ceil(this.getDataLength(dataName) / 5)
+    },
+    getSingleData: function(dataName){
+        if(this.data.hasOwnProperty(dataName)) return this.data[dataName]
+    },
+    getPageData: function(dataName, page){
+        if(!this.data.hasOwnProperty(dataName)) return false
+        let resdata = []
+        page = parseInt(page)
+        //判断页数是否在范围内
+        let pageCounts = this.getDataLength(dataName)
+        if(page < 1 || page > pageCounts) return false
+        
+        let start = 5 * page,
+            end = 5 * (page + 1)
+        console.log(start, end)
+        for(let i = start; i < end; i++){
+            resdata.push(this.data[dataName][i])
+        }
+        return resdata
+
+    },
+    getIndex: function(dataName){
+        if(this.index.hasOwnProperty(dataName)) return this.index[dataName]
+    },
+    getDataLength: function(dataName){
+        if(this.data.hasOwnProperty(dataName)) return parseInt(this.data[dataName].length)
+    }
+}
+
+const fakeDataBaseProcess = {
+    // innerJoin = _inner
+    // leftJoin = _inner + _part(left)
+    // rightJoin = _inner+ _part(right)
+    // outerJoin = _inner + _part(left) + _part(right)
+    
+    _inner: function(dataName_1, dataName_2, column){
         //首先根据this.getSameColumns生成相同属性列
         //根据相同属性this.constructToJoinData生成待处理数据格式(便于后续操作)
-        //两个数据表根据findSameKeyinTwoTable找到对应列相同值
+        //两个数据表根据findSameKeyinTwoTableColumn找到对应列相同值
         //最后根据相同值生成合成数据
         //重复值处理 n*n
         
         let sameColumns = this.getSameColumns(dataName_1, dataName_2),
             redata_1 = this.constructToJoinData(dataName_1, column),
             redata_2 = this.constructToJoinData(dataName_2, column),
-            sameKey = this.findSameKeyinTwoTable(dataName_1, dataName_2, column),
+            sameKey = this.findSameKeyinTwoTableColumn(dataName_1, dataName_2, column),
             resList = []
         
+        //根据相同Key填充
         sameKey.forEach(function(d,i){
             let key = d,
                 table_1 = redata_1[d],
@@ -194,98 +293,45 @@ dataProcess = {
             }
         })
         
-        let resData = {
-            'sameColumns': sameColumns,
-            'redata_1': redata_1,
-            'redata_2': redata_2,
-            'sameKey': sameKey,
-            'assignData': resList
-        }
-        
-        return resData
+        return resList
         //根据sameKey生成合成数据
     },
-    outerJoin: function(){
+    _part: function(dataName_1, dataName_2, column){
+        //用于生成每个数据独有部分
+        //left data_1 right data_2
+        let diffKey = this.findDiffKeyinTwoTable(dataName_1, dataName_2, column),
+            redata_1 = this.constructToJoinData(dataName_1, column),
+            redata = [],
+            redata_2_dataNamelist = this.getDataNameColoumnsList(dataName_2,column)
         
-        //let redata_1 = dataBuffer.getSingleData(dataName_1),
-        //   redata_2 = dataBuffer.getSingleData(dataName_2)
-        let a = [
-            {id: 4, name: 'Greg'},
-            {id: 1, name: 'David'},
-            {id: 2, name: 'John'},
-            {id: 3, name: 'Matt'},
-        ]
-        let b = [
-            {id: 5, name: 'Mathew', position: '1'},
-            {id: 6, name: 'Gracia', position: '2'},
-            {id: 2, name: 'John', position: '2'},
-            {id: 3, name: 'Matt', position: '2'},
-        ]
-
-        let r = a.filter(({ id: idv }) => b.every(({ id: idc }) => idv !== idc));
-        let newArr = b.concat(r).map((v) => v.position ? v : { ...v, position: null });
-        return newArr
-    },
-    leftJoin: function(dataName_1, dataName_2, column){
-
-    },
-    rightJoin: function(dataName_1, dataName_2, column){},
-    deleteData: function(StoreId, filename){
-        dataName = filename.split('.')[0]
-        index = dataBuffer.index[dataName][StoreId]
-        //isDelete = true 表示已经删除
-        dataBuffer.data[dataName][index].isDelete = true
-    },
-    unDeleteData: function(StoreId, filename){
-        dataName = filename.split('.')[0]
-        index = dataBuffer.index[dataName][StoreId]
-        //isDelete = false 表示未删除
-        dataBuffer.data[dataName][index].isDelete = false
-    },
-    sortData: function(filename){
-        dataName = filename.split('.')[0]
-    },
-    findSameKeyinTwoTable: function(dataName_1, dataName_2, column){
-        let data_1 = dataBuffer.getSingleData(dataName_1),
-            data_2 = dataBuffer.getSingleData(dataName_2),
-            data_1_list = [],
-            data_2_list = [],
-            sameKey = []
-        //table A B C
-        //去重初始化 每次合并根据结果多次添加
-        data_1.forEach(function(d,i){
-            if(d.hasOwnProperty(column)){
-                if(data_1_list.indexOf(d) == -1){
-                    //去重添加
-                    data_1_list.push(d[column])
-                }
+        let addObj = {}
+        //填充null
+        redata_2_dataNamelist.forEach(function(d){
+            if(!addObj.hasOwnProperty(d)){
+                addObj[d] = null
             }
         })
-
-        data_2.forEach(function(d,i){
-            if(d.hasOwnProperty(column)){
-                if(data_2_list.indexOf(d) == -1){
-                    //去重添加
-                    data_2_list.push(d[column])
-                }
+        //根据不同Key填充
+        diffKey.forEach(function(d){
+            let objList = redata_1[d]
+            for(let i = 0; i< objList.length; i++){
+                let obj = objList[i]
+                redata.push(Object.assign(obj, addObj))
             }
         })
-
-        //A -> C
-        data_1_list.forEach(function(d,i){
-            if(data_2_list.indexOf(d) != -1 && sameKey.indexOf(d) == -1){
-                //元素如果在表2存在并且未加入sameKey
-                sameKey.push(d)
-            }
+        return redata
+    },
+    getSameColumns: function(dataName_1, dataName_2){
+        //查找相同列 查找两个数据表相同列
+        let data_1_list = dataBuffer.getColoumnsList(dataName_1),
+            data_2_list = dataBuffer.getColoumnsList(dataName_2),                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
+            redata = []
+        
+        data_1_list.forEach(function(d){
+            if(data_2_list.indexOf(d) != -1)
+                redata.push(d)
         })
-        //B -> C
-        data_2_list.forEach(function(d,i){
-            if(data_1_list.indexOf(d) != -1 && sameKey.indexOf(d) == -1){
-                //元素如果在表1存在并且没有加入到sameKey中
-                sameKey.push(d)
-            }
-        })
-        return sameKey
+        return redata
     },
     constructToJoinData: function(dataName, column){
         //根据将要处理的列 改变数据到预处理格式 便于后续搜索操作
@@ -323,80 +369,56 @@ dataProcess = {
         })
         return redata
     },
-    getSameColumns: function(dataName_1, dataName_2){
-        let data_1_dimensions = dataBuffer.getSingleDimensions(dataName_1),
-            data_2_dimensions = dataBuffer.getSingleDimensions(dataName_2),
-            data_1_list = [],
-            data_2_list = [],                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
-            redata = []
-        
-        //处理数据格式
-        data_1_dimensions.forEach(function(d){
-            if(redata.indexOf(d.name) == -1){
-                data_1_list.push(d.name)
+    findSameKeyinTwoTableColumn: function(dataName_1, dataName_2, column){
+        //在两个表指定列找到相同值
+        let data_1_list = this.getColumnAttrUnrepeat(dataName_1, column),
+            data_2_list = this.getColumnAttrUnrepeat(dataName_2, column),
+            sameKey = []
+
+        //A -> C
+        data_1_list.forEach(function(d,i){
+            if(data_2_list.indexOf(d) != -1 && sameKey.indexOf(d) == -1){
+                //元素如果在表2存在并且未加入sameKey
+                sameKey.push(d)
             }
         })
-
-        data_2_dimensions.forEach(function(d){
-            if(redata.indexOf(d.name) == -1){
-                data_2_list.push(d.name)
+        //B -> C
+        data_2_list.forEach(function(d,i){
+            if(data_1_list.indexOf(d) != -1 && sameKey.indexOf(d) == -1){
+                //元素如果在表1存在并且没有加入到sameKey中
+                sameKey.push(d)
             }
         })
-        
-        //查找相同列
-        data_1_list.forEach(function(d){
-            if(data_2_list.indexOf(d) != -1)
-                redata.push(d)
+        return sameKey
+    },
+    findDiffKeyinTwoTable : function(dataName_1, dataName_2, column){
+        ////在两个表指定列找到不同值 (table1 相对于 table2)
+        let data_1_list = this.getColumnAttrUnrepeat(dataName_1, column),
+            data_2_list = this.getColumnAttrUnrepeat(dataName_2, column),
+            diffKey = data_1_list.filter(function(v, i, arr){
+                return arr.indexOf(v) !== data_2_list.lastIndexOf(v);
+            })
+        return diffKey
+    },
+    getColumnAttrUnrepeat: function(dataName_1, column){
+        //获取数据某列所有不重复项
+        let data = dataBuffer.getSingleData(dataName_1),
+            data_list = []
+        //table A B C
+        //去重初始化 每次合并根据结果多次添加
+        data.forEach(function(d,i){
+            if(d.hasOwnProperty(column)){
+                if(data_list.indexOf(d) == -1){
+                    //去重添加
+                    data_list.push(d[column])
+                }
+            }
         })
-
-        return redata
+        return data_list
+    },
+    getDataNameColoumnsList: function(dataName){
+        //构造 dataName + key 属性返回
+        return dataBuffer.getColoumnsList(dataName).map(x => dataName + '.' + x)
     }
 }
-
-const dataBuffer = {
-    data: {},
-    index: {},
-    dimensions: {},
-    getAllDimensions: function(){
-        return this.dimensions;
-    },
-    getSingleDimensions: function(dataName){
-        for(let i in this.dimensions){
-            if(i == dataName){
-                return this.dimensions[i]
-            }
-        }
-        return null
-    },
-    getDataPagesCount: function(dataName){
-        return Math.ceil(this.getDataLength(dataName) / 5)
-    },
-    getSingleData: function(dataName){
-        if(this.data.hasOwnProperty(dataName)) return this.data[dataName]
-    },
-    getPageData: function(dataName, page){
-        if(!this.data.hasOwnProperty(dataName)) return false
-        let resdata = []
-        page = parseInt(page)
-        //判断页数是否在范围内
-        let pageCounts = this.getDataLength(dataName)
-        if(page < 1 || page > pageCounts) return false
-        
-        let start = 5 * page,
-            end = 5 * (page + 1)
-        console.log(start, end)
-        for(let i = start; i < end; i++){
-            resdata.push(this.data[dataName][i])
-        }
-        return resdata
-
-    },
-    getIndex: function(dataName){
-        if(this.index.hasOwnProperty(dataName)) return this.index[dataName]
-    },
-    getDataLength: function(dataName){
-        if(this.data.hasOwnProperty(dataName)) return parseInt(this.data[dataName].length)
-    }
-}
-
 module.exports = {dataProcess, dataBuffer};

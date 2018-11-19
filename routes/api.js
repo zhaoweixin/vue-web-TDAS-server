@@ -69,13 +69,55 @@ router.post('/getSingleData' ,function(req, res, next){
     res.json(resData);
 })
 
+router.post('/innerJoin', function(req, res, next){
+    let params = req.body
+        dataName_1 = params.dataName_1,
+        dataName_2 = params.dataName_2,
+        column = params.column,
+        resData = []
+    resData = dataProcess.innerJoin(dataName_1, dataName_2, column)
+    res.setHeader('Content-Type', 'application/json');
+    res.json(resData)
+})
+router.post('/outerJoin', function(req, res, next){
+    let params = req.body
+        dataName_1 = params.dataName_1,
+        dataName_2 = params.dataName_2,
+        column = params.column,
+        resData = []
+    resData = dataProcess.outerJoin(dataName_1, dataName_2, column)
+    res.setHeader('Content-Type', 'application/json');
+    res.json(resData)
+})
+router.post('/leftJoin', function(req, res, next){
+    let params = req.body
+        dataName_1 = params.dataName_1,
+        dataName_2 = params.dataName_2,
+        column = params.column,
+        resData = []
+    resData = dataProcess.leftJoin(dataName_1, dataName_2, column)
+    res.setHeader('Content-Type', 'application/json');
+    res.json(resData)
+})
+
+router.post('/rightJoin', function(req, res, next){
+    let params = req.body
+        dataName_1 = params.dataName_1,
+        dataName_2 = params.dataName_2,
+        column = params.column,
+        resData = []
+    resData = dataProcess.rightJoin(dataName_1, dataName_2, column)
+    res.setHeader('Content-Type', 'application/json');
+    res.json(resData)
+})
+
 router.post('/test' ,function(req, res, next){
     let params = req.body
         dataName_1 = params.dataName_1,
         dataName_2 = params.dataName_2,
         column = params.column,
         resData = []
-    resData = dataProcess.outerJoin()
+    resData = dataProcess.rightJoin(dataName_1, dataName_2, column)
     res.setHeader('Content-Type', 'application/json');
     res.json(resData)
 })
