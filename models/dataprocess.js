@@ -395,30 +395,31 @@ const fakeDataBaseProcess = {
         ////在两个表指定列找到不同值 (table1 相对于 table2)
         let data_1_list = this.getColumnAttrUnrepeat(dataName_1, column),
             data_2_list = this.getColumnAttrUnrepeat(dataName_2, column),
-            diffKey = data_1_list.filter(function(v, i, arr){
-                return arr.indexOf(v) !== data_2_list.lastIndexOf(v);
-            })
+            diffKey = data_1_list.filter( x => !data_2_list.includes(x)),
+            redata = [...new Set(diffKey)];
         return diffKey
     },
     getColumnAttrUnrepeat: function(dataName_1, column){
         //获取数据某列所有不重复项
         let data = dataBuffer.getSingleData(dataName_1),
-            data_list = []
+            data_list = [],
+            data_obj = {}
         //table A B C
         //去重初始化 每次合并根据结果多次添加
+
         data.forEach(function(d,i){
             if(d.hasOwnProperty(column)){
-                if(data_list.indexOf(d) == -1){
+                if(!(d[column] in data_obj)){
                     //去重添加
-                    data_list.push(d[column])
+                    data_obj[d[column]] = null
                 }
             }
         })
-        return data_list
+        return Object.keys(data_obj)
     },
     getDataNameColoumnsList: function(dataName){
         //构造 dataName + key 属性返回
         return dataBuffer.getColoumnsList(dataName).map(x => dataName + '.' + x)
     }
 }
-module.exports = {dataProcess, dataBuffer};
+module.exports = {dataProcess, dataBuffer, fakeDataBaseProcess};

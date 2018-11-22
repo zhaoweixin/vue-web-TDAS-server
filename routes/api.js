@@ -2,11 +2,12 @@ const express = require('express');
 const upload = require('./multer')
 const router = express.Router();
 const fs = require('fs')
+const path = require('path');
 
 const dataProcessFunc = require('../models/dataprocess');
 const dataProcess = dataProcessFunc.dataProcess
 const dataBuffer = dataProcessFunc.dataBuffer
-
+const fakeDataBaseProcess = dataProcessFunc.fakeDataBaseProcess
 //api
     //上传并保存数据
 router.post('/changeAvatar', upload.single(), function(req, res){
@@ -117,9 +118,17 @@ router.post('/test' ,function(req, res, next){
         dataName_2 = params.dataName_2,
         column = params.column,
         resData = []
-    resData = dataProcess.rightJoin(dataName_1, dataName_2, column)
+    console.log(fakeDataBaseProcess)
+    resData = fakeDataBaseProcess.getColumnAttrUnrepeat(dataName_1, column)
     res.setHeader('Content-Type', 'application/json');
     res.json(resData)
+})
+
+router.get('/svg', function(req, res){
+    fs.readFile(path.join(__dirname, '../svg/left-join.png'), 'utf-8', function(err, data){
+        if (err) throw err;
+        res.send(data)
+    })
 })
     //暂时使用默认存入数据功能
 const storeDefaultData = function(){
