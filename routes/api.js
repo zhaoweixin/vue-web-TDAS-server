@@ -70,13 +70,23 @@ router.post('/getSingleData' ,function(req, res, next){
     res.json(resData);
 })
 
+//获取单个数据文件属性列表
+router.post('/getDataList', function(req, res, next){
+    
+    let params = req.body
+    let resdata = dataBuffer.getSingleDimensions(params.dataName)
+    res.setHeader('Content-Type', 'application/json');
+    res.json(resdata)
+})
+
 router.post('/innerJoin', function(req, res, next){
     let params = req.body
         dataName_1 = params.dataName_1,
         dataName_2 = params.dataName_2,
-        column = params.column,
+        column_1 = params.column_1,
+        column_2 = params.column_2
         resData = []
-    resData = dataProcess.innerJoin(dataName_1, dataName_2, column)
+    resData = dataProcess.innerJoin(dataName_1, dataName_2, column_1, column_2)
     res.setHeader('Content-Type', 'application/json');
     res.json(resData)
 })
@@ -84,9 +94,10 @@ router.post('/outerJoin', function(req, res, next){
     let params = req.body
         dataName_1 = params.dataName_1,
         dataName_2 = params.dataName_2,
-        column = params.column,
+        column_1 = params.column_1,
+        column_2 = params.column_2
         resData = []
-    resData = dataProcess.outerJoin(dataName_1, dataName_2, column)
+    resData = dataProcess.outerJoin(dataName_1, dataName_2, column_1, column_2)
     res.setHeader('Content-Type', 'application/json');
     res.json(resData)
 })
@@ -94,20 +105,21 @@ router.post('/leftJoin', function(req, res, next){
     let params = req.body
         dataName_1 = params.dataName_1,
         dataName_2 = params.dataName_2,
-        column = params.column,
+        column_1 = params.column_1,
+        column_2 = params.column_2
         resData = []
-    resData = dataProcess.leftJoin(dataName_1, dataName_2, column)
+    resData = dataProcess.leftJoin(dataName_1, dataName_2, column_1, column_2)
     res.setHeader('Content-Type', 'application/json');
     res.json(resData)
 })
-
 router.post('/rightJoin', function(req, res, next){
     let params = req.body
         dataName_1 = params.dataName_1,
         dataName_2 = params.dataName_2,
-        column = params.column,
+        column_1 = params.column_1,
+        column_2 = params.column_2
         resData = []
-    resData = dataProcess.rightJoin(dataName_1, dataName_2, column)
+    resData = dataProcess.rightJoin(dataName_1, dataName_2, column_1, column_2)
     res.setHeader('Content-Type', 'application/json');
     res.json(resData)
 })
@@ -124,12 +136,6 @@ router.post('/test' ,function(req, res, next){
     res.json(resData)
 })
 
-router.get('/svg', function(req, res){
-    fs.readFile(path.join(__dirname, '../svg/left-join.png'), 'utf-8', function(err, data){
-        if (err) throw err;
-        res.send(data)
-    })
-})
     //暂时使用默认存入数据功能
 const storeDefaultData = function(){
     fs.readdir(process.cwd() + "/upload", function(err, files){

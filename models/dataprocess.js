@@ -166,23 +166,23 @@ dataProcess = {
             })
         }
     },
-    innerJoin: function(dataName_1, dataName_2, column){
-        return fakeDataBaseProcess._inner(dataName_1, dataName_2, column)
+    innerJoin: function(dataName_1, dataName_2, column_1, column_2){
+        return fakeDataBaseProcess._inner(dataName_1, dataName_2, column_1, column_2)
     },
     outerJoin: function(dataName_1, dataName_2, column){
-        let innerData = fakeDataBaseProcess._inner(dataName_1, dataName_2, column),
-            leftData = fakeDataBaseProcess._part(dataName_1, dataName_2, column),
-            rightData = fakeDataBaseProcess._part(dataName_2, dataName_1, column)
+        let innerData = fakeDataBaseProcess._inner(dataName_1, dataName_2, column_1, column_2),
+            leftData = fakeDataBaseProcess._part(dataName_1, dataName_2, column_1, column_2),
+            rightData = fakeDataBaseProcess._part(dataName_2, dataName_1, column_1, column_2)
         return innerData.concat(leftData.concat(rightData))
     },
-    leftJoin: function(dataName_1, dataName_2, column){
-        let innerData = fakeDataBaseProcess._inner(dataName_1, dataName_2, column),
-            leftData = fakeDataBaseProcess._part(dataName_1, dataName_2, column)
+    leftJoin: function(dataName_1, dataName_2, column_1, column_2){
+        let innerData = fakeDataBaseProcess._inner(dataName_1, dataName_2, column_1, column_2),
+            leftData = fakeDataBaseProcess._part(dataName_1, dataName_2, column_1, column_2)
         return innerData.concat(leftData)
     },
-    rightJoin: function(dataName_1, dataName_2, column){
-        let innerData = fakeDataBaseProcess._inner(dataName_1, dataName_2, column),
-            rightData = fakeDataBaseProcess._part(dataName_2, dataName_1, column)
+    rightJoin: function(dataName_1, dataName_2, column_1, column_2){
+        let innerData = fakeDataBaseProcess._inner(dataName_1, dataName_2, column_1, column_2),
+            rightData = fakeDataBaseProcess._part(dataName_2, dataName_1, column_1, column_2)
         return innerData.concat(rightData)
     },
     deleteData: function(StoreId, filename){
@@ -264,7 +264,7 @@ const fakeDataBaseProcess = {
     // rightJoin = _inner+ _part(right)
     // outerJoin = _inner + _part(left) + _part(right)
     
-    _inner: function(dataName_1, dataName_2, column){
+    _inner: function(dataName_1, dataName_2, column_1, column_2){
         //首先根据this.getSameColumns生成相同属性列
         //根据相同属性this.constructToJoinData生成待处理数据格式(便于后续操作)
         //两个数据表根据findSameKeyinTwoTableColumn找到对应列相同值
@@ -272,9 +272,9 @@ const fakeDataBaseProcess = {
         //重复值处理 n*n
         
         let sameColumns = this.getSameColumns(dataName_1, dataName_2),
-            redata_1 = this.constructToJoinData(dataName_1, column),
-            redata_2 = this.constructToJoinData(dataName_2, column),
-            sameKey = this.findSameKeyinTwoTableColumn(dataName_1, dataName_2, column),
+            redata_1 = this.constructToJoinData(dataName_1, column_1),
+            redata_2 = this.constructToJoinData(dataName_2, column_2),
+            sameKey = this.findSameKeyinTwoTableColumn(dataName_1, dataName_2, column_1, column_2),
             resList = []
         
         //根据相同Key填充
@@ -296,13 +296,13 @@ const fakeDataBaseProcess = {
         return resList
         //根据sameKey生成合成数据
     },
-    _part: function(dataName_1, dataName_2, column){
+    _part: function(dataName_1, dataName_2, column_1, column_2){
         //用于生成每个数据独有部分
         //left data_1 right data_2
-        let diffKey = this.findDiffKeyinTwoTable(dataName_1, dataName_2, column),
-            redata_1 = this.constructToJoinData(dataName_1, column),
+        let diffKey = this.findDiffKeyinTwoTable(dataName_1, dataName_2, column_1, column_2),
+            redata_1 = this.constructToJoinData(dataName_1, column_1),
             redata = [],
-            redata_2_dataNamelist = this.getDataNameColoumnsList(dataName_2,column)
+            redata_2_dataNamelist = this.getDataNameColoumnsList(dataName_2, column_1)
         
         let addObj = {}
         //填充null
@@ -369,10 +369,10 @@ const fakeDataBaseProcess = {
         })
         return redata
     },
-    findSameKeyinTwoTableColumn: function(dataName_1, dataName_2, column){
+    findSameKeyinTwoTableColumn: function(dataName_1, dataName_2, column_1, column_2){
         //在两个表指定列找到相同值
-        let data_1_list = this.getColumnAttrUnrepeat(dataName_1, column),
-            data_2_list = this.getColumnAttrUnrepeat(dataName_2, column),
+        let data_1_list = this.getColumnAttrUnrepeat(dataName_1, column_1),
+            data_2_list = this.getColumnAttrUnrepeat(dataName_2, column_2),
             sameKey = []
 
         //A -> C
@@ -391,10 +391,10 @@ const fakeDataBaseProcess = {
         })
         return sameKey
     },
-    findDiffKeyinTwoTable : function(dataName_1, dataName_2, column){
+    findDiffKeyinTwoTable : function(dataName_1, dataName_2, column_1, column_2){
         ////在两个表指定列找到不同值 (table1 相对于 table2)
-        let data_1_list = this.getColumnAttrUnrepeat(dataName_1, column),
-            data_2_list = this.getColumnAttrUnrepeat(dataName_2, column),
+        let data_1_list = this.getColumnAttrUnrepeat(dataName_1, column_1),
+            data_2_list = this.getColumnAttrUnrepeat(dataName_2, column_2),
             diffKey = data_1_list.filter( x => !data_2_list.includes(x)),
             redata = [...new Set(diffKey)];
         return diffKey
@@ -422,4 +422,5 @@ const fakeDataBaseProcess = {
         return dataBuffer.getColoumnsList(dataName).map(x => dataName + '.' + x)
     }
 }
+
 module.exports = {dataProcess, dataBuffer, fakeDataBaseProcess};
